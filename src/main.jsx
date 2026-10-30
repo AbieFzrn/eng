@@ -1,10 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css'; // Pastikan Tailwind di-import di sini
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+// (Opsional) Export service ke window untuk debugging seperti kodemu sebelumnya
+import { ensureSignedIn } from './services/authService';
+import { createRoom, joinRoom } from './services/roomService';
+window.dbg = { ensureSignedIn, createRoom, joinRoom };
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
     <App />
-  </StrictMode>,
-)
+  </React.StrictMode>
+);

@@ -1,0 +1,92 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "roomSecrets": {
+      "$roomId": {
+        ".read": false,
+        ".write": "auth != null && !newData.exists() && root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid",
+
+        "passwordHash": {
+          ".write": "auth != null && !data.exists() && root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length === 64"
+        },
+
+        "slots": {
+          "$n": {
+            ".write": "auth != null && $n.matches(/^[0-9]$/) && (data.child('uid').val() === auth.uid || (root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid && !newData.exists()) || (!data.exists() && newData.child('uid').val() === auth.uid && root.child('rooms/' + $roomId + '/status').val() === 'lobby' && newData.child('joinKey').val() === root.child('roomSecrets/' + $roomId + '/passwordHash').val()))",
+            ".validate": "newData.hasChildren(['uid', 'joinKey'])"
+          }
+        },
+
+        "$other": { ".validate": false }
+      }
+    },
+
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null && (data.child('hostUid').val() === auth.uid || data.child('players').child(auth.uid).exists())",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.child('hostUid').val() === auth.uid && !newData.exists()))",
+        ".validate": "newData.hasChildren(['hostUid', 'createdAt', 'status', 'round', 'config'])",
+
+        "hostUid": { ".validate": "newData.isString()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+
+        "status": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid",
+          ".validate": "newData.isString() && (newData.val() === 'lobby' || newData.val() === 'playing' || newData.val() === 'finished')"
+        },
+
+        "round": {
+          ".write": "auth != null && root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid",
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 50"
+        },
+
+        "startAt": {
+          ".write": "auth != null && root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid",
+          ".validate": "newData.isNumber()"
+        },
+
+        "config": {
+          ".validate": "newData.hasChildren(['totalRounds', 'perRound', 'maxScorePerRound', 'questions'])",
+          "totalRounds": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 20" },
+          "perRound": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50" },
+          "maxScorePerRound": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" }
+        },
+
+        "players": {
+          "$uid": {
+            ".write": "auth != null && ((auth.uid === $uid && (data.exists() || (root.child('rooms/' + $roomId + '/status').val() === 'lobby' && root.child('roomSecrets/' + $roomId + '/slots').child(newData.child('slot').val()).child('uid').val() === auth.uid))) || (root.child('rooms/' + $roomId + '/hostUid').val() === auth.uid && !newData.exists()))",
+            ".validate": "newData.hasChildren(['name', 'slot', 'joinedAt'])",
+
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20" },
+            "slot": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]$/)" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "connected": { ".validate": "newData.isBoolean()" },
+            "total": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= root.child('rooms/' + $roomId + '/config/totalRounds').val() * root.child('rooms/' + $roomId + '/config/maxScorePerRound').val()"
+            },
+
+            "rounds": {
+              "$r": {
+                ".validate": "$r.matches(/^r[1-9][0-9]?$/)",
+                "score": {
+                  ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= root.child('rooms/' + $roomId + '/config/maxScorePerRound').val()"
+                },
+                "finishedAt": { ".validate": "newData.isNumber()" },
+                "progress": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+                "$other": { ".validate": false }
+              }
+            },
+
+            "$other": { ".validate": false }
+          }
+        },
+
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
