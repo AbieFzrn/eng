@@ -701,6 +701,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         this.sentenceText = item.text;
+        this.questionText = item.question?.trim() || item.text;
         this.target = item.words.map(textOf);
 
         const cardsData = Phaser.Utils.Array.Shuffle([
@@ -1201,7 +1202,7 @@ export default class MainScene extends Phaser.Scene {
 
     speak() {
         if (!this.roundActive) return;
-        this.audio?.speak(this.sentenceText);
+        this.audio?.speak(this.questionText, this.settings.speakLang);
     }
 
     replayAudio() {

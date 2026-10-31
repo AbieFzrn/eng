@@ -1,7 +1,7 @@
 
 import Phaser from 'phaser';
 import MainScene from './scenes/MainScene';
-
+import BootScene from './scenes/BootScene';
 // Ruang desain dari prototipe asli
 const DESIGN_H = 600;
 const RENDER_SCALE = 2;
@@ -77,7 +77,8 @@ export function startGame(settings, parentElement) {
     gameInstance = new Phaser.Game(config);
 
     // Tambahkan MainScene dengan data settings
-    gameInstance.scene.add('MainScene', MainScene, true, settings);
+    gameInstance.scene.add('MainScene', MainScene);
+    gameInstance.scene.add('BootScene', BootScene, true, settings);
 
     // Pantau perubahan ukuran container React
     resizeObserver = new ResizeObserver(() => {
